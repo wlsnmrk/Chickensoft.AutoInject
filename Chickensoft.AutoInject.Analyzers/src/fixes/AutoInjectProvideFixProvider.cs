@@ -150,7 +150,6 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
           createChangedDocument: c =>
             MethodModifier.AddCallToMethod(
               context.Document,
-              typeDeclaration,
               existingMethod,
               "Provide",
               c
@@ -182,11 +181,17 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
   }
 
   private static async Task<Document> AddNewMethodAsync(
-      Document document,
-      TypeDeclarationSyntax typeDeclaration,
-      string identifier,
-      IEnumerable<SyntaxToken> creationModifiers,
-      CancellationToken cancellationToken) {
+    Document document,
+    TypeDeclarationSyntax typeDeclaration,
+    string identifier,
+    IEnumerable<SyntaxToken> creationModifiers,
+    CancellationToken cancellationToken
+  ) {
+    var root = await document.GetSyntaxRootAsync(cancellationToken);
+    if (root is null) {
+      return document;
+    }
+
     // Create the new method
     var mewMethod = SyntaxFactory
       .MethodDeclaration(
@@ -211,11 +216,6 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
 
     // Add the new method to the class
     var newTypeDeclaration = typeDeclaration.AddMembers(mewMethod);
-    // Replace the old type declaration with the new one
-    var root = await document.GetSyntaxRootAsync(cancellationToken);
-    if (root is null) {
-      return document;
-    }
 
     var newRoot = root.ReplaceNode(typeDeclaration, newTypeDeclaration);
     // Return the updated document
