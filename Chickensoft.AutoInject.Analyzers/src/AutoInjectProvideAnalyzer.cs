@@ -59,7 +59,11 @@ public class AutoInjectProvideAnalyzer : DiagnosticAnalyzer {
     }
 
     // Check that Meta attribute has an AutoInject Provider type (ex: [Meta(typeof(IAutoNode))])
-    var attribute = AnalyzerTools.GetAutoInjectMetaAttribute(classDeclaration);
+    var attribute = AnalyzerTools
+      .GetAutoInjectMetaAttribute(
+        classDeclaration,
+        Constants.IsProviderMetaName
+      );
 
     if (attribute is null) {
       return;

@@ -19,7 +19,7 @@ this.Provide();
 """;
   public const string MESSAGE_NOTIFY_METHOD_NAME = "this.Notify(what)";
 
-  private static readonly List<string> _autoInjectTypeNames = [
+  private static readonly List<string> _autoInjectMetaNames = [
     "IAutoNode",
     "IAutoOn",
     "IAutoConnect",
@@ -31,9 +31,22 @@ this.Provide();
   /// <summary>
   /// Type names that we look for in Meta attributes to determine if a class needs a this.Notify(what) call.
   /// </summary>
-  public static IReadOnlyList<string> AutoInjectTypeNames =>
-    _autoInjectTypeNames;
+  public static IReadOnlyList<string> AutoInjectMetaNames =>
+    _autoInjectMetaNames;
 
-  public static bool IsAutoInjectTypeName(string name) =>
-    _autoInjectTypeNames.Contains(name);
+  public static bool IsAutoInjectMetaName(string name) =>
+    _autoInjectMetaNames.Contains(name);
+
+  private static readonly List<string> _providerMetaNames = [
+    "IAutoNode",
+    "IProvider",
+  ];
+
+  /// <summary>
+  /// Type names that we look for in Meta attributes to determine if a class needs a this.Provide() call.
+  /// </summary>
+  public static IReadOnlyList<string> ProviderMetaNames => _providerMetaNames;
+
+  public static bool IsProviderMetaName(string name) =>
+    _providerMetaNames.Contains(name);
 }

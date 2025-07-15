@@ -1,12 +1,14 @@
 namespace Chickensoft.AutoInject.Analyzers.Utils;
 
+using System;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 public static class AnalyzerTools {
   public static AttributeSyntax? GetAutoInjectMetaAttribute(
-    ClassDeclarationSyntax classDeclaration
+    ClassDeclarationSyntax classDeclaration,
+    Predicate<string> isMetaName
   ) {
     foreach (var attributeList in classDeclaration.AttributeLists) {
       foreach (var attr in attributeList.Attributes) {
@@ -19,8 +21,7 @@ public static class AnalyzerTools {
               arg.Expression is TypeOfExpressionSyntax {
                 Type: IdentifierNameSyntax identifierName
               }
-                && Constants
-                  .IsAutoInjectTypeName(identifierName.Identifier.ValueText)
+                && isMetaName(identifierName.Identifier.ValueText)
             ) {
               return attr;
             }

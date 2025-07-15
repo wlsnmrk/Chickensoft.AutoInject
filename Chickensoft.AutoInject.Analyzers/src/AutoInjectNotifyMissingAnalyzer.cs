@@ -31,7 +31,11 @@ public class AutoInjectNotifyMissingAnalyzer : DiagnosticAnalyzer {
   private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context) {
     var classDeclaration = (ClassDeclarationSyntax)context.Node;
 
-    var attribute = AnalyzerTools.GetAutoInjectMetaAttribute(classDeclaration);
+    var attribute = AnalyzerTools
+      .GetAutoInjectMetaAttribute(
+        classDeclaration,
+        Constants.IsAutoInjectMetaName
+      );
     if (attribute is null) {
       return;
     }
