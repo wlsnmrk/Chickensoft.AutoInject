@@ -116,7 +116,7 @@ public class AutoInjectProvideFixProviderTest {
       testCode.ReplaceLineEndings(),
       fixedCode.ReplaceLineEndings(),
       AutoInjectProvideFixProvider.GetCodeFixEquivalenceKey(
-        AutoInjectProvideFixProvider.SETUP_METHOD_NAME,
+        Constants.SETUP_METHOD_NAME,
         false
       )
     );
@@ -192,7 +192,7 @@ public class AutoInjectProvideFixProviderTest {
       testCode.ReplaceLineEndings(),
       fixedCode.ReplaceLineEndings(),
       AutoInjectProvideFixProvider.GetCodeFixEquivalenceKey(
-        AutoInjectProvideFixProvider.ONREADY_METHOD_NAME,
+        Constants.ONREADY_METHOD_NAME,
         false
       )
     );
@@ -268,7 +268,7 @@ public class AutoInjectProvideFixProviderTest {
       testCode.ReplaceLineEndings(),
       fixedCode.ReplaceLineEndings(),
       AutoInjectProvideFixProvider.GetCodeFixEquivalenceKey(
-        AutoInjectProvideFixProvider.READY_OVERRIDE_METHOD_NAME,
+        Constants.READY_METHOD_NAME,
         false
       )
     );
@@ -345,7 +345,7 @@ public class AutoInjectProvideFixProviderTest {
       testCode.ReplaceLineEndings(),
       fixedCode.ReplaceLineEndings(),
       AutoInjectProvideFixProvider.GetCodeFixEquivalenceKey(
-        AutoInjectProvideFixProvider.SETUP_METHOD_NAME,
+        Constants.SETUP_METHOD_NAME,
         true
       )
     );
@@ -420,7 +420,7 @@ public class AutoInjectProvideFixProviderTest {
       testCode.ReplaceLineEndings(),
       fixedCode.ReplaceLineEndings(),
       AutoInjectProvideFixProvider.GetCodeFixEquivalenceKey(
-        AutoInjectProvideFixProvider.ONREADY_METHOD_NAME,
+        Constants.ONREADY_METHOD_NAME,
         true
       )
     );
@@ -495,7 +495,7 @@ public class AutoInjectProvideFixProviderTest {
       testCode.ReplaceLineEndings(),
       fixedCode.ReplaceLineEndings(),
       AutoInjectProvideFixProvider.GetCodeFixEquivalenceKey(
-        AutoInjectProvideFixProvider.READY_OVERRIDE_METHOD_NAME,
+        Constants.READY_METHOD_NAME,
         true
       )
     );

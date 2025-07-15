@@ -1,7 +1,6 @@
 namespace Chickensoft.AutoInject.Analyzers;
 
 using System.Collections.Immutable;
-using System.Linq;
 using Chickensoft.AutoInject.Analyzers.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -32,35 +31,22 @@ public class AutoInjectNotificationOverrideMissingAnalyzer : DiagnosticAnalyzer 
   private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context) {
     var classDeclaration = (ClassDeclarationSyntax)context.Node;
 
-    var attributes = classDeclaration.AttributeLists.SelectMany(list => list.Attributes
-    ).Where(attribute => attribute.Name.ToString() == Constants.META_ATTRIBUTE_NAME
-       // Check that Meta attribute has an AutoInject type (ex: [Meta(typeof(IAutoNode))])
-       && attribute.ArgumentList?.Arguments.Any(arg =>
-          arg.Expression is TypeOfExpressionSyntax { Type: IdentifierNameSyntax identifierName } &&
-         Constants.AutoInjectTypeNames.Contains(identifierName.Identifier.ValueText)
-       ) == true
-    )
-    .ToList();
+    var attribute = AnalyzerTools.GetAutoInjectMetaAttribute(classDeclaration);
 
-    if (attributes.Count == 0) {
+    if (attribute is null) {
       return;
     }
 
-    // Check if the class has a _Notification override method.
-    var hasNotificationOverride = classDeclaration
-      .Members
-      .OfType<MethodDeclarationSyntax>()
-      .Any(method =>
-        method.Identifier.ValueText == "_Notification" &&
-        method.Modifiers.Any(SyntaxKind.OverrideKeyword) &&
-        method.ParameterList.Parameters.Count == 1
-      );
-
-    if (!hasNotificationOverride) {
-      // Report missing Notify call, _Notification override already exists.
+    if (
+      AnalyzerTools.GetMethodOverride(
+        classDeclaration,
+        Constants.NOTIFICATION_METHOD_NAME
+      ) is null
+    ) {
+      // Report missing _Notification override.
       context.ReportDiagnostic(
         Diagnostics.MissingAutoInjectNotificationOverride(
-          attributes[0].GetLocation(),
+          attribute.GetLocation(),
           classDeclaration.Identifier.ValueText
         )
       );

@@ -22,8 +22,8 @@ public static class Diagnostics {
 
   public static DiagnosticDescriptor MissingAutoInjectNotifyDescriptor { get; } = new(
     id: $"{ERR_PREFIX}002",
-    title: $"Missing \"{Constants.NOTIFY_METHOD_NAME}\" method call",
-    messageFormat: $"Missing \"{Constants.NOTIFY_METHOD_NAME}\" in AutoInject class implementation `{{0}}`",
+    title: $"Missing \"{Constants.MESSAGE_NOTIFY_METHOD_NAME}\" method call",
+    messageFormat: $"Missing \"{Constants.MESSAGE_NOTIFY_METHOD_NAME}\" in AutoInject class implementation `{{0}}`",
     category: ERR_CATEGORY,
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
@@ -36,8 +36,8 @@ public static class Diagnostics {
 
   public static DiagnosticDescriptor MissingAutoInjectProvideDescriptor { get; } = new(
     id: $"{ERR_PREFIX}003",
-    title: $"Missing \"{Constants.PROVIDE_METHOD_NAME}\" call in provider class",
-    messageFormat: $"Missing \"{Constants.PROVIDE_METHOD_NAME}\" call in provider class implementation `{{0}}`",
+    title: $"Missing \"{Constants.MESSAGE_PROVIDE_METHOD_NAME}\" call in provider class",
+    messageFormat: $"Missing \"{Constants.MESSAGE_PROVIDE_METHOD_NAME}\" call in provider class implementation `{{0}}`",
     category: ERR_CATEGORY,
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,

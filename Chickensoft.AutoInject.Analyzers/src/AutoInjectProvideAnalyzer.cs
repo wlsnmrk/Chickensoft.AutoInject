@@ -1,7 +1,6 @@
 namespace Chickensoft.AutoInject.Analyzers;
 
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -37,47 +36,47 @@ public class AutoInjectProvideAnalyzer : DiagnosticAnalyzer {
     var classDeclaration = (ClassDeclarationSyntax)context.Node;
 
     // Check that IProvide is implemented by the class, as these are the only classes that need to call Provide().
-    var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclaration, context.CancellationToken);
-    var implementsIProvide = classSymbol?.AllInterfaces
-      .Any(i => i.Name == Constants.PROVIDER_INTERFACE_NAME && i.IsGenericType) == true;
+    var classSymbol = context
+      .SemanticModel
+      .GetDeclaredSymbol(classDeclaration, context.CancellationToken);
+
+    if (classSymbol is null) {
+      return;
+    }
+
+    var implementsIProvide = false;
+    foreach (var @interface in classSymbol.AllInterfaces) {
+      if (@interface.IsGenericType
+        && @interface.Name == Constants.PROVIDER_INTERFACE_NAME
+      ) {
+        implementsIProvide = true;
+        break;
+      }
+    }
 
     if (!implementsIProvide) {
       return;
     }
 
     // Check that Meta attribute has an AutoInject Provider type (ex: [Meta(typeof(IAutoNode))])
-    var attributes = classDeclaration.AttributeLists.SelectMany(list => list.Attributes
-      ).Where(attribute => attribute.Name.ToString() == Constants.META_ATTRIBUTE_NAME
-         && attribute.ArgumentList?.Arguments.Any(arg =>
-           arg.Expression is TypeOfExpressionSyntax { Type: IdentifierNameSyntax identifierName } &&
-           Constants.ProviderMetaNames.Contains(identifierName.Identifier.ValueText)
-         ) == true
-      )
-      .ToList();
+    var attribute = AnalyzerTools.GetAutoInjectMetaAttribute(classDeclaration);
 
-    if (attributes.Count == 0) {
+    if (attribute is null) {
       return;
     }
 
-    const string provideMethodName = "Provide";
-
     // Check if the class calls "this.Provide()" anywhere
-    var hasProvide = classDeclaration
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .Any(invocation =>
-        invocation.Expression is MemberAccessExpressionSyntax {
-          Name.Identifier.ValueText: provideMethodName, Expression: ThisExpressionSyntax
-        });
-
-    if (hasProvide) {
+    if (
+      AnalyzerTools
+        .HasThisCall(classDeclaration, Constants.PROVIDE_METHOD_NAME)
+    ) {
       return;
     }
 
     // No provide call found, report the diagnostic
     context.ReportDiagnostic(
       Diagnostics.MissingAutoInjectProvide(
-        attributes[0].GetLocation(),
+        attribute.GetLocation(),
         classDeclaration.Identifier.ValueText
       )
     );

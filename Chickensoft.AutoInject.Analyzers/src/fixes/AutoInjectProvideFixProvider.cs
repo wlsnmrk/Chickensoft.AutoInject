@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -22,10 +21,6 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
   private static readonly ImmutableArray<string> _fixableDiagnosticIds =
     [Diagnostics.MissingAutoInjectProvideDescriptor.Id];
 
-  public const string SETUP_METHOD_NAME = "Setup";
-  public const string ONREADY_METHOD_NAME = "OnReady";
-  public const string READY_OVERRIDE_METHOD_NAME = "_Ready";
-
   public sealed override ImmutableArray<string> FixableDiagnosticIds =>
     _fixableDiagnosticIds;
 
@@ -33,24 +28,36 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
     WellKnownFixAllProviders.BatchFixer;
 
   public sealed override async Task RegisterCodeFixesAsync(
-      CodeFixContext context) {
+    CodeFixContext context
+  ) {
+    if (context.Diagnostics.Length == 0) {
+      return;
+    }
+
     var root = await context.Document
       .GetSyntaxRootAsync(context.CancellationToken)
       .ConfigureAwait(false);
+
     if (root is null) {
       return;
     }
 
-    var diagnostic = context.Diagnostics.First();
+    var diagnostic = context.Diagnostics[0];
     var diagnosticSpan = diagnostic.Location.SourceSpan;
 
+    var parent = root.FindToken(diagnosticSpan.Start).Parent;
+    if (parent is null) {
+      return;
+    }
+
     // Find the type declaration identified by the diagnostic.
-    var typeDeclaration = root
-      .FindToken(diagnosticSpan.Start)
-      .Parent?
-      .AncestorsAndSelf()
-      .OfType<TypeDeclarationSyntax>()
-      .FirstOrDefault();
+    TypeDeclarationSyntax? typeDeclaration = default;
+    foreach (var ancestor in parent.AncestorsAndSelf()) {
+      if (ancestor is TypeDeclarationSyntax td) {
+        typeDeclaration = td;
+        break;
+      }
+    }
     if (typeDeclaration is null) {
       return;
     }
@@ -60,30 +67,36 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
 
     // Setup() Method Fixes
     RegisterMethodFixesAsync(
-      context, typeDeclaration, diagnostic,
-      SETUP_METHOD_NAME,
+      context,
+      typeDeclaration,
+      diagnostic,
+      Constants.SETUP_METHOD_NAME,
       m =>
-        m.Identifier.Text == SETUP_METHOD_NAME
+        m.Identifier.Text == Constants.SETUP_METHOD_NAME
           && m.Modifiers.Any(SyntaxKind.PublicKeyword),
       SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
     );
 
     // OnReady() Method Fixes
     RegisterMethodFixesAsync(
-      context, typeDeclaration, diagnostic,
-      ONREADY_METHOD_NAME,
+      context,
+      typeDeclaration,
+      diagnostic,
+      Constants.ONREADY_METHOD_NAME,
       m =>
-        m.Identifier.Text == ONREADY_METHOD_NAME
+        m.Identifier.Text == Constants.ONREADY_METHOD_NAME
           && m.Modifiers.Any(SyntaxKind.PublicKeyword),
       SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
     );
 
     // _Ready() Method Fixes
     RegisterMethodFixesAsync(
-      context, typeDeclaration, diagnostic,
-      READY_OVERRIDE_METHOD_NAME,
+      context,
+      typeDeclaration,
+      diagnostic,
+      Constants.READY_METHOD_NAME,
       m =>
-        m.Identifier.Text == READY_OVERRIDE_METHOD_NAME
+        m.Identifier.Text == Constants.READY_METHOD_NAME
           && m.Modifiers.Any(SyntaxKind.PublicKeyword)
           && m.Modifiers.Any(SyntaxKind.OverrideKeyword),
       SyntaxFactory.TokenList(
@@ -120,9 +133,13 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
     Func<MethodDeclarationSyntax, bool> findPredicate,
     IEnumerable<SyntaxToken> creationModifiers
   ) {
-    var existingMethod = typeDeclaration.Members
-      .OfType<MethodDeclarationSyntax>()
-      .FirstOrDefault(findPredicate);
+    MethodDeclarationSyntax? existingMethod = default;
+    foreach (var member in typeDeclaration.Members) {
+      if (member is MethodDeclarationSyntax method && findPredicate(method)) {
+        existingMethod = method;
+        break;
+      }
+    }
 
     if (existingMethod is not null) {
       // Method exists, offer to add a call to it
@@ -149,13 +166,13 @@ public class AutoInjectProvideFixProvider : CodeFixProvider {
         CodeAction.Create(
           title:
             $"Create \"{methodName}()\" method that calls \"this.Provide()\"",
-          createChangedDocument: c =>
+          createChangedDocument: cancellationToken =>
             AddNewMethodAsync(
               context.Document,
               typeDeclaration,
               methodName,
               creationModifiers,
-              c
+              cancellationToken
             ),
           equivalenceKey: GetCodeFixEquivalenceKey(methodName, false)
         ),
