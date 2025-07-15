@@ -20,8 +20,7 @@ public static class AnalyzerTools {
                 Type: IdentifierNameSyntax identifierName
               }
                 && Constants
-                  .AutoInjectTypeNames
-                  .Contains(identifierName.Identifier.ValueText)
+                  .IsAutoInjectTypeName(identifierName.Identifier.ValueText)
             ) {
               return attr;
             }
